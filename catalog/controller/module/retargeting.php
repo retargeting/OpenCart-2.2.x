@@ -59,37 +59,46 @@ class ControllerModuleRetargeting extends Controller {
          *             Products feed
          * --------------------------------------
          **/
-        /* XML Request intercepted, kill everything else and output */
-        if (isset($_GET['xml']) && $_GET['xml'] === 'retargeting') {
+        /* JSON Request intercepted, kill everything else and output */
+        if (isset($_GET['json']) && $_GET['json'] === 'retargeting') {
 
             /* Modify the header */
-            header('Content-Type: application/xml');
+            header('Content-Type: application/json');
 
             /* Pull ALL products from the database */
             $products = $this->model_catalog_product->getProducts();
-
-            $output = '<products>';
+            $retargetingFeed = array();
             foreach ($products as $product) {
-                $product['quantity'] = (isset($product['quantity']) && !empty($product['quantity'])) ? 1 : 0;
-                $product_promotional_price = isset($product['special']) ? $product['special'] : 0;
-                $product_url = htmlspecialchars($this->url->link('product/product', 'product_id=' . $product['product_id']), ENT_XML1);
-                $product_image_url = $data['shop_url'] . 'image/' . $product['image'];
-                $product_image_url = htmlspecialchars($product_image_url, ENT_XML1);
-                $output .= "
-                                <product>
-                                    <id>{$product['product_id']}</id>
-                                    <stock>{$product['quantity']}</stock>
-                                    <price>{$product['price']}</price>
-                                    <promo>{$product_promotional_price}</promo>
-                                    <url>{$product_url}</url>
-                                    <image>{$product_image_url}</image>
-                                </product>
-                            ";
+              $retargetingFeed[] = array (
+                'id'=> $product['product_id'],
+                'price' => round(
+                  $this->tax->calculate(
+                    $product['price'],
+                    $product['tax_class_id'],
+                    $this->config->get('config_tax')
+                  ), 2),
+                'promo' => (
+                  isset($product['special']) ? round (
+                    $this->tax->calculate(
+                      $product['special'],
+                      $product['tax_class_id'],
+                      $this->config->get('config_tax')
+                    ), 2)
+                    : 0),
+                'promo_price_end_date' => null,
+                'inventory' => array(
+                  'variations' => false,
+                  'stock' => (($product['quantity'] > 0) ? 1 : 0)
+                ),
+                'user_groups' => false,
+                'product_availability' => null                  
+              );
             }
-            $output .= '</products>';
-            echo $output;
+            
+            echo json_encode($retargetingFeed);
             die();
-        }
+          }
+            
         /* --- END PRODUCTS FEED  --- */
 
 
@@ -544,7 +553,23 @@ class ControllerModuleRetargeting extends Controller {
         }
         /* --- END sendProduct  --- */
 
-        
+        /*
+         * clickImage
+         */
+        if ($data['current_page'] === 'product/product') {
+            $clickImage_product_id = $this->request->get['product_id'];
+            $clickImage_product_info = $this->model_catalog_product->getProduct($clickImage_product_id);
+            $data['clickImage'] = "
+                                                /* -- clickImage -- */
+                                                jQuery(document).ready(function(){
+                                                        /* -- clickImage -- */
+                                                        jQuery(\"{$data['retargeting_clickImage']}\").click(function(){
+                                                            _ra.clickImage({$clickImage_product_id});
+                                                        });
+                                                });
+                                                ";
+            $data['js_output'] .= $data['clickImage'];
+        }
 
         /*
          * addToWishList ✓
@@ -765,9 +790,9 @@ class ControllerModuleRetargeting extends Controller {
             */
 
             $apiKey = $this->config->get('retargeting_apikey');
-            $token = $this->config->get('retargeting_token');
+            $restApiKey = $this->config->get('retargeting_token');
 
-            if($apiKey && $token && $apiKey != '' && $token != ''){
+            if($restApiKey && $restApiKey != ''){
                 $orderInfo = array(
                     'order_no' => $order_no,
                     'lastname' => $lastname,
@@ -796,7 +821,7 @@ class ControllerModuleRetargeting extends Controller {
                     );
                 }
 
-                $orderClient = new Retargeting_REST_API_Client($apiKey, $token);
+                $orderClient = new Retargeting_REST_API_Client($restApiKey);
                 $orderClient->setResponseFormat("json");
                 $orderClient->setDecoding(false);
                 $response = $orderClient->order->save($orderInfo,$orderProducts);
