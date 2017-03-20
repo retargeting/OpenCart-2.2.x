@@ -710,127 +710,127 @@ class ControllerModuleRetargeting extends Controller {
          * 
          * via pre.order.add event
          */
+        if ($data['current_page'] === 'checkout/success') {
+          if (
+              (isset($this->session->data['retargeting_pre_order_add']) && !empty($this->session->data['retargeting_pre_order_add']))
+              ||
+              (isset($this->session->data['retargeting_post_order_add']) && !empty($this->session->data['retargeting_post_order_add']))
+                                                                                                                            ) {
+              $data['order_id'] = $this->session->data['retargeting_post_order_add'];
+              $data['order_data'] = $this->model_checkout_order->getOrder($data['order_id']);
 
-        if (
-            (isset($this->session->data['retargeting_pre_order_add']) && !empty($this->session->data['retargeting_pre_order_add']))
-            ||
-            (isset($this->session->data['retargeting_post_order_add']) && !empty($this->session->data['retargeting_post_order_add']))
-                                                                                                                          ) {
-            $data['order_id'] = $this->session->data['retargeting_post_order_add'];
-            $data['order_data'] = $this->model_checkout_order->getOrder($data['order_id']);
+              $order_no = $data['order_data']['order_id'];
+              $lastname = $data['order_data']['lastname'];
+              $firstname = $data['order_data']['firstname'];
+              $email = $data['order_data']['email'];
+              $phone = $data['order_data']['telephone'];
+              $state = $data['order_data']['shipping_country'];
+              $city = $data['order_data']['shipping_city'];
+              $address = $data['order_data']['shipping_address_1'];
 
-            $order_no = $data['order_data']['order_id'];
-            $lastname = $data['order_data']['lastname'];
-            $firstname = $data['order_data']['firstname'];
-            $email = $data['order_data']['email'];
-            $phone = $data['order_data']['telephone'];
-            $state = $data['order_data']['shipping_country'];
-            $city = $data['order_data']['shipping_city'];
-            $address = $data['order_data']['shipping_address_1'];
+              $discount_code = isset($this->session->data['retargeting_discount_code']) ? $this->session->data['retargeting_discount_code'] : 0;
+              $total_discount_value = 0;
+              $shipping_value = 0;
+              $total_order_value = $data['order_data']['total'];
 
-            $discount_code = isset($this->session->data['retargeting_discount_code']) ? $this->session->data['retargeting_discount_code'] : 0;
-            $total_discount_value = 0;
-            $shipping_value = 0;
-            $total_order_value = $data['order_data']['total'];
+              // Based on order id, grab the ordered products
+              $order_product_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$data['order_id'] . "'");
+              $data['order_product_query'] = $order_product_query;
 
-            // Based on order id, grab the ordered products
-            $order_product_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$data['order_id'] . "'");
-            $data['order_product_query'] = $order_product_query;
+              $data['saveOrder'] = "
+                                          var _ra = _ra || {};
+                                          _ra.saveOrderInfo = {
+                                              'order_no': {$order_no},
+                                              'lastname': '{$lastname}',
+                                              'firstname': '{$firstname}',
+                                              'email': '{$email}',
+                                              'phone': '{$phone}',
+                                              'state': '{$state}',
+                                              'city': '{$city}',
+                                              'address': '{$address}',
+                                              'discount_code': '{$discount_code}',
+                                              'discount': {$total_discount_value},
+                                              'shipping': {$shipping_value},
+                                              'rebates': 0,
+                                              'fees': 0,
+                                              'total': {$total_order_value}
+                                          };
+                                          ";
 
-            $data['saveOrder'] = "
-                                        var _ra = _ra || {};
-                                        _ra.saveOrderInfo = {
-                                            'order_no': {$order_no},
-                                            'lastname': '{$lastname}',
-                                            'firstname': '{$firstname}',
-                                            'email': '{$email}',
-                                            'phone': '{$phone}',
-                                            'state': '{$state}',
-                                            'city': '{$city}',
-                                            'address': '{$address}',
-                                            'discount_code': '{$discount_code}',
-                                            'discount': {$total_discount_value},
-                                            'shipping': {$shipping_value},
-                                            'rebates': 0,
-                                            'fees': 0,
-                                            'total': {$total_order_value}
-                                        };
-                                        ";
+              /* -------------------------------------- */
+              $data['saveOrder'] .= "_ra.saveOrderProducts = [";
+              for ($i = count($order_product_query->rows) - 1; $i >= 0; $i--) {
+                  if ($i == 0) {
+                      $data['saveOrder'] .= "{
+                                                  'id': {$order_product_query->rows[$i]['product_id']},
+                                                  'quantity': {$order_product_query->rows[$i]['quantity']},
+                                                  'price': {$order_product_query->rows[$i]['price']},
+                                                  'variation_code': ''
+                                                  }";
+                      break;
+                  }
+                  $data['saveOrder'] .= "{
+                                              'id': {$order_product_query->rows[$i]['product_id']},
+                                              'quantity': {$order_product_query->rows[$i]['quantity']},
+                                              'price': {$order_product_query->rows[$i]['price']},
+                                              'variation_code': ''
+                                              },";
+              }
+              $data['saveOrder'] .= "];";
+              /* -------------------------------------- */
 
-            /* -------------------------------------- */
-            $data['saveOrder'] .= "_ra.saveOrderProducts = [";
-            for ($i = count($order_product_query->rows) - 1; $i >= 0; $i--) {
-                if ($i == 0) {
-                    $data['saveOrder'] .= "{
-                                                'id': {$order_product_query->rows[$i]['product_id']},
-                                                'quantity': {$order_product_query->rows[$i]['quantity']},
-                                                'price': {$order_product_query->rows[$i]['price']},
-                                                'variation_code': ''
-                                                }";
-                    break;
-                }
-                $data['saveOrder'] .= "{
-                                            'id': {$order_product_query->rows[$i]['product_id']},
-                                            'quantity': {$order_product_query->rows[$i]['quantity']},
-                                            'price': {$order_product_query->rows[$i]['price']},
-                                            'variation_code': ''
-                                            },";
-            }
-            $data['saveOrder'] .= "];";
-            /* -------------------------------------- */
+              $data['saveOrder'] .= "
+                                          if( _ra.ready !== undefined ) {
+                                              _ra.saveOrder(_ra.saveOrderInfo, _ra.saveOrderProducts);
+                                          }";
+              $data['js_output'] .= $data['saveOrder'];
+              
+              /*
+              * REST API Save Order
+              */
 
-            $data['saveOrder'] .= "
-                                        if( _ra.ready !== undefined ) {
-                                            _ra.saveOrder(_ra.saveOrderInfo, _ra.saveOrderProducts);
-                                        }";
-            $data['js_output'] .= $data['saveOrder'];
-            
-            /*
-            * REST API Save Order
-            */
+              $apiKey = $this->config->get('retargeting_apikey');
+              $restApiKey = $this->config->get('retargeting_token');
 
-            $apiKey = $this->config->get('retargeting_apikey');
-            $restApiKey = $this->config->get('retargeting_token');
+              if($restApiKey && $restApiKey != ''){
+                  $orderInfo = array(
+                      'order_no' => $order_no,
+                      'lastname' => $lastname,
+                      'firstname' => $firstname,
+                      'email' => $email,
+                      'phone' => $phone,
+                      'state' => $state,
+                      'city' => $city,
+                      'address' => $address,
+                      'discount_code' => $discount_code,
+                      'discount' => $total_discount_value,
+                      'shipping' => $shipping_value,
+                      'rebates'   =>  0,
+                      'fees'      =>  0,
+                      'total' => $total_order_value
+                  );
 
-            if($restApiKey && $restApiKey != ''){
-                $orderInfo = array(
-                    'order_no' => $order_no,
-                    'lastname' => $lastname,
-                    'firstname' => $firstname,
-                    'email' => $email,
-                    'phone' => $phone,
-                    'state' => $state,
-                    'city' => $city,
-                    'address' => $address,
-                    'discount_code' => $discount_code,
-                    'discount' => $total_discount_value,
-                    'shipping' => $shipping_value,
-                    'rebates'   =>  0,
-                    'fees'      =>  0,
-                    'total' => $total_order_value
-                );
+                  $orderProducts = array();
 
-                $orderProducts = array();
+                  foreach($order_product_query->rows as $orderedProduct) {
+                      $orderProducts[] = array(
+                          'id' => $orderedProduct['product_id'],
+                          'quantity'=> $orderedProduct['quantity'],
+                          'price'=> $orderedProduct['price'],
+                          'variation_code'=> ''
+                      );
+                  }
 
-                foreach($order_product_query->rows as $orderedProduct) {
-                    $orderProducts[] = array(
-                        'id' => $orderedProduct['product_id'],
-                        'quantity'=> $orderedProduct['quantity'],
-                        'price'=> $orderedProduct['price'],
-                        'variation_code'=> ''
-                    );
-                }
-
-                $orderClient = new Retargeting_REST_API_Client($restApiKey);
-                $orderClient->setResponseFormat("json");
-                $orderClient->setDecoding(false);
-                $response = $orderClient->order->save($orderInfo,$orderProducts);
-            }
-            
-            unset($this->session->data['retargeting_pre_order_add']);
-            unset($this->session->data['retargeting_post_order_add']);
+                  $orderClient = new Retargeting_REST_API_Client($restApiKey);
+                  $orderClient->setResponseFormat("json");
+                  $orderClient->setDecoding(false);
+                  $response = $orderClient->order->save($orderInfo,$orderProducts);
+              }
+              
+              unset($this->session->data['retargeting_pre_order_add']);
+              unset($this->session->data['retargeting_post_order_add']);
+          }
         }
-
 
         /* ---------------------------------------------------------------------------------------------------------------------
          * Set the template path for our module & load the View
