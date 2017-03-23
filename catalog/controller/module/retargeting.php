@@ -502,20 +502,9 @@ class ControllerModuleRetargeting extends Controller {
                 $catDetails = array();
                 foreach ($product_cat as $pcatid) {
                     $categoryDetails = $this->model_catalog_category->getCategory($pcatid['category_id']);
-                    // Trebuie o conditie ca atunci cand $categoryDetails['status'] == 0 sa se trimita $emergencyCategory;
+
                     if(isset($categoryDetails['status']) && $categoryDetails['status'] == 1) {
                         $catDetails[] = $categoryDetails;
-                    } else {
-                      foreach ($catDetails as $productCategory) {
-                          $emergencyCategory = array([
-                              'id' => 'Root',
-                              'name' => 'Root',
-                              'parent' => false,
-                              'breadcrumb' => []
-                          ]);
-                          
-                          $data['sendProduct'] .= "'" . 'category' . "':" . json_encode($emergencyCategory);              
-                      }
                     }
                 }
 
@@ -543,6 +532,7 @@ class ControllerModuleRetargeting extends Controller {
                                 'parent' => false    
                             ]]
                         ]);
+                        
                     }
                 }
                 if ( !empty($preCat) ) {
