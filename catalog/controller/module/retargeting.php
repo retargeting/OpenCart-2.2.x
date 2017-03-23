@@ -508,7 +508,7 @@ class ControllerModuleRetargeting extends Controller {
                     } else {
                       foreach ($catDetails as $productCategory) {
                           $emergencyCategory = array([
-                              'id' => 1,
+                              'id' => 'Root',
                               'name' => 'Root',
                               'parent' => false,
                               'breadcrumb' => []
