@@ -456,7 +456,12 @@ class ControllerModuleRetargeting extends Controller {
             $product_categories = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_category WHERE product_id = '" . (int)$product_id . "'");
             $product_categories = $product_categories->rows; // Get all the subcategories for this product. Reorder its numerical indexes to ease the breadcrumb logic
             $encoded_product_name = htmlspecialchars($product_details['name']);
-
+            $rootCat = array([
+                'id' => 'Root',
+                'name' => 'Root',
+                'parent' => false,
+                'breadcrumb' => []
+            ]);
             /* Send the base info */
             $data['sendProduct'] = "
                                     var _ra = _ra || {};
@@ -497,50 +502,58 @@ class ControllerModuleRetargeting extends Controller {
                 $catDetails = array();
                 foreach ($product_cat as $pcatid) {
                     $categoryDetails = $this->model_catalog_category->getCategory($pcatid['category_id']);
+                    // Trebuie o conditie ca atunci cand $categoryDetails['status'] == 0 sa se trimita $emergencyCategory;
                     if(isset($categoryDetails['status']) && $categoryDetails['status'] == 1) {
                         $catDetails[] = $categoryDetails;
+                    } else {
+                      foreach ($catDetails as $productCategory) {
+                          $emergencyCategory = array([
+                              'id' => 1,
+                              'name' => 'Root',
+                              'parent' => false,
+                              'breadcrumb' => []
+                          ]);
+                          
+                          $data['sendProduct'] .= "'" . 'category' . "':" . json_encode($emergencyCategory);              
+                      }
                     }
                 }
 
-                $preCat = [];
+                $preCat = array();
                 foreach ($catDetails as $productCategory) {
                     if (isset($productCategory['parent_id']) && ($productCategory['parent_id'] == 0)) {
-                        $preCat[] = [
+                        $preCat = array([
                             'id' => $productCategory['category_id'],
                             'name' => htmlspecialchars($productCategory['name']),
                             'parent' => false,
                             'breadcrumb' => []
-                        ];
+                        ]);
 
                     } else {
 
                         $breadcrumbDetails =  $this->model_catalog_category->getCategory($productCategory['parent_id']);
-                        $preCat[] = [
+                        $preCat = array([
                             'id' => (int)$productCategory['category_id'],
                             'name' => htmlspecialchars($productCategory['name']),
-                            'parent' => 1,
+                            'parent' => 'Root',
                             // 'parent' => (int)$productCategory['parent_id'],
                             'breadcrumb' => [[
-                                'id' => 1,
+                                'id' => 'Root',
                                 'name' => 'Root',
                                 'parent' => false    
                             ]]
-                        ];
+                        ]);
                     }
                 }
-
-
-                $data['sendProduct'] .= "'" . 'category' . "':" . json_encode($preCat);
+                if ( !empty($preCat) ) {
+                  $data['sendProduct'] .= "'" . 'category' . "':" . json_encode($preCat);
+                } else {
+                    $data['sendProduct'] .= "'" . 'category' . "':" . json_encode($rootCat);
+                }
 
             } else {
-                $emergencyCategory[] = [
-                    'id' => 1,
-                    'name' => 'Root',
-                    'parent' => false,
-                    'breadcrumb' => []
-                ];
 
-                $data['sendProduct'] .= "'" . 'category' . "':" . json_encode($emergencyCategory);
+                $data['sendProduct'] .= "'" . 'category' . "':" . json_encode($rootCat);
 
              }// Close check if product has categories assigned
 
@@ -898,3 +911,4 @@ class ControllerModuleRetargeting extends Controller {
 
 
 }
+
