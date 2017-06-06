@@ -457,12 +457,12 @@ class ControllerModuleRetargeting extends Controller {
             $product_categories = $product_categories->rows; // Get all the subcategories for this product. Reorder its numerical indexes to ease the breadcrumb logic
             $encoded_product_name = htmlspecialchars($product_details['name']);
             $decoded_product_url = htmlspecialchars_decode($product_url);
-            $rootCat = array([
+            $rootCat = array(array(
                 'id' => 'Root',
                 'name' => 'Root',
                 'parent' => false,
-                'breadcrumb' => []
-            ]);
+                'breadcrumb' => array()
+            ));
             /* Send the base info */
             $data['sendProduct'] = "
                                     var _ra = _ra || {};
@@ -512,27 +512,27 @@ class ControllerModuleRetargeting extends Controller {
                 $preCat = array();
                 foreach ($catDetails as $productCategory) {
                     if (isset($productCategory['parent_id']) && ($productCategory['parent_id'] == 0)) {
-                        $preCat = array([
+                        $preCat = array(array(
                             'id' => $productCategory['category_id'],
                             'name' => htmlspecialchars($productCategory['name']),
                             'parent' => false,
-                            'breadcrumb' => []
-                        ]);
+                            'breadcrumb' => array()
+                        ));
 
                     } else {
 
                         $breadcrumbDetails =  $this->model_catalog_category->getCategory($productCategory['parent_id']);
-                        $preCat = array([
+                        $preCat = array(array(
                             'id' => (int)$productCategory['category_id'],
                             'name' => htmlspecialchars($productCategory['name']),
                             'parent' => 'Root',
                             // 'parent' => (int)$productCategory['parent_id'],
-                            'breadcrumb' => [[
+                            'breadcrumb' => array(array(
                                 'id' => 'Root',
                                 'name' => 'Root',
                                 'parent' => false    
-                            ]]
-                        ]);
+                            ))
+                        ));
                         
                     }
                 }
