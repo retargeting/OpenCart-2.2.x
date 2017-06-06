@@ -527,11 +527,11 @@ class ControllerModuleRetargeting extends Controller {
                             'name' => htmlspecialchars($productCategory['name']),
                             'parent' => 'Root',
                             // 'parent' => (int)$productCategory['parent_id'],
-                            'breadcrumb' => [[
+                            'breadcrumb' => array(array(
                                 'id' => 'Root',
                                 'name' => 'Root',
                                 'parent' => false    
-                            ]]
+                            ))
                         ));
                         
                     }
