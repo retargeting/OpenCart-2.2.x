@@ -450,7 +450,7 @@ class ControllerModuleRetargeting extends Controller {
          */
         if ($data['current_page'] === 'product/product') {
 
-            $product_id = $this->request->get['product_id'];
+            $product_id = strtok($this->request->get['product_id'], '?');
             $product_url = $this->url->link('product/product', 'product_id=' . $product_id);
             $product_details = $this->model_catalog_product->getProduct($product_id);
             $product_categories = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_category WHERE product_id = '" . (int)$product_id . "'");
@@ -573,7 +573,7 @@ class ControllerModuleRetargeting extends Controller {
          * clickImage
          */
         if ($data['current_page'] === 'product/product') {
-            $clickImage_product_id = $this->request->get['product_id'];
+            $clickImage_product_id = strtok($this->request->get['product_id'], '?');
             $clickImage_product_info = $this->model_catalog_product->getProduct($clickImage_product_id);
             $data['clickImage'] = "
                                                 /* -- clickImage -- */
@@ -630,7 +630,7 @@ class ControllerModuleRetargeting extends Controller {
          * commentOnProduct ✓
          */
         if ($data['current_page'] === 'product/product') {
-            $commentOnProduct_product_info = $this->request->get['product_id'];
+            $commentOnProduct_product_info = strtok($this->request->get['product_id'], '?');
             $data['commentOnProduct'] = "
                                         /* -- commentOnProduct -- */
                                         jQuery(document).ready(function($){
@@ -650,7 +650,7 @@ class ControllerModuleRetargeting extends Controller {
          * addToCart [v1 - class/id listener] ✓
          */
         if ($data['current_page'] === 'product/product') {
-            $mouseOverAddToCart_product_id = $this->request->get['product_id'];
+            $mouseOverAddToCart_product_id = strtok($this->request->get['product_id'], '?');
             $mouseOverAddToCart_product_info = $this->model_catalog_product->getProduct($mouseOverAddToCart_product_id);
             $mouseOverAddToCart_product_promo = isset($mouseOverAddToCart_product_info['promo']) ? : 0;
             $data['mouseOverAddToCart'] = "
@@ -724,14 +724,10 @@ class ControllerModuleRetargeting extends Controller {
         /*
          * saveOrder ✓
          * 
-         * via pre.order.add event
+         * via post.order.add event
          */
         if ($data['current_page'] === 'checkout/success') {
-          if (
-              (isset($this->session->data['retargeting_pre_order_add']) && !empty($this->session->data['retargeting_pre_order_add']))
-              ||
-              (isset($this->session->data['retargeting_post_order_add']) && !empty($this->session->data['retargeting_post_order_add']))
-                                                                                                                            ) {
+          if ( (isset($this->session->data['retargeting_post_order_add']) && !empty($this->session->data['retargeting_post_order_add']) ) ) {
               $data['order_id'] = $this->session->data['retargeting_post_order_add'];
               $data['order_data'] = $this->model_checkout_order->getOrder($data['order_id']);
 
@@ -854,7 +850,6 @@ class ControllerModuleRetargeting extends Controller {
                   $response = $orderClient->order->save($orderInfo,$orderProducts);
               }
               
-              unset($this->session->data['retargeting_pre_order_add']);
               unset($this->session->data['retargeting_post_order_add']);
           }
         }
