@@ -164,7 +164,7 @@ class ControllerModuleRetargeting extends Controller {
 
             $datetime = new DateTime();
             $start_date = $datetime->format('Y-m-d');
-            $datetime->modify('+6 months');
+            $datetime->modify('+12 months');
             $expiration_date = $datetime->format('Y-m-d');
 
             for ($i = $discount_codes; $i > 0; $i--) {
