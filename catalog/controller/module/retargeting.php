@@ -455,7 +455,7 @@ class ControllerModuleRetargeting extends Controller {
             $product_details = $this->model_catalog_product->getProduct($product_id);
             $product_categories = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_category WHERE product_id = '" . (int)$product_id . "'");
             $product_categories = $product_categories->rows; // Get all the subcategories for this product. Reorder its numerical indexes to ease the breadcrumb logic
-            $encoded_product_name = htmlspecialchars($product_details['name']);
+            $decoded_product_name = htmlspecialchars_decode($product_details['name']);
             $decoded_product_url = htmlspecialchars_decode($product_url);
             $rootCat = array(array(
                 'id' => 'Root',
@@ -470,7 +470,7 @@ class ControllerModuleRetargeting extends Controller {
                                     ";
             $data['sendProduct'] .= "
                                     'id': $product_id,
-                                    'name': '{$encoded_product_name}',
+                                    'name': '{$decoded_product_name}',
                                     'url': '{$decoded_product_url}',
                                     'img': '{$data['shop_url']}image/{$product_details['image']}',
                                     'price': '".round($this->tax->calculate($product_details['price'], $product_details['tax_class_id'], $this->config->get('config_tax')),2)."',
