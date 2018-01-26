@@ -5,7 +5,7 @@
 
     MODULE: Retargeting
 -->
-<!-- START RETARGETING MODULE -->
+<!-- START RETARGETING EXTENSION -->
 <script>
 
     (function(){
@@ -19,4 +19,4 @@
 	var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(ra,s);})();
     <?php echo $js_output; ?>
 </script>
-<!-- END RETARGETING MODULE 50.50.x-->
+<!-- END RETARGETING EXTENSION v2.2.0 -->
