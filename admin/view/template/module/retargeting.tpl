@@ -194,7 +194,7 @@
                 <div class="row" style="padding-top: 25px;">
                     <hr />
                     <div class="col-sm-12">
-                        <span class="small">You can get your <strong>API Key</strong> and <strong>Token</strong> from your <a href="https://retargeting.biz/admin?action=api_redirect&token=028e36488ab8dd68eaac58e07ef8f9bf" target="_blank">Retargeting account</a>.</span>
+                        <span class="small">You can get your <strong>API Key</strong> and <strong>Token</strong> from your <a href="https://retargeting.biz/" target="_blank" rel="noopener noreferrer">Retargeting account</a>.</span>
                     </div>
                 </div>
             </div>
