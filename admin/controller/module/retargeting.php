@@ -1,19 +1,21 @@
 <?php
 /**
- * Retargeting Module for OpenCart 2.2.x
+ * Retargeting Tracker v2.2.0 for OpenCart 2.2.x
  *
  * admin/controller/module/retargeting.php
  */
 
-class ControllerModuleRetargeting extends Controller {
+class ControllerModuleRetargeting extends Controller
+{
 
-    private $error = array();
+    private $error = [];
 
     /* ---------------------------------------------------------------------------------------------------------------------
      * INDEX
      * ---------------------------------------------------------------------------------------------------------------------
      */
-    public function index() {
+    public function index()
+    {
 
         /* ---------------------------------------------------------------------------------------------------------------------
          * Setup the protocol
@@ -44,23 +46,33 @@ class ControllerModuleRetargeting extends Controller {
 
             $this->model_setting_setting->editSetting('retargeting', $this->request->post);
             $this->session->data['success'] = $this->language->get('text_success');
-            $this->response->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'));
+            $this->response->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'],
+                'SSL'));
 
         }
         /* --- END --- */
 
 
         /* Translated strings */
-        $data['heading_title']  = $this->language->get('heading_title');
-        $data['text_edit']      = $this->language->get('text_edit');
-        $data['text_enabled']   = $this->language->get('text_enabled');
-        $data['text_disabled']  = $this->language->get('text_disabled');
-        $data['text_token']   = $this->language->get('text_token');
-        $data['entry_status']   = $this->language->get('entry_status');
+        $data['heading_title'] = $this->language->get('heading_title');
+        $data['text_edit'] = $this->language->get('text_edit');
+        $data['text_signup'] = $this->language->get('text_signup');
+        $data['text_enabled'] = $this->language->get('text_enabled');
+        $data['text_disabled'] = $this->language->get('text_disabled');
+        $data['text_signup'] = $this->language->get('text_signup');
+        $data['text_token'] = $this->language->get('text_token');
+        $data['text_layout'] = sprintf($this->language->get('text_layout'),
+            $this->url->link('design/layout', 'token=' . $this->session->data['token'], true));
+        $data['entry_status'] = $this->language->get('entry_status');
+        $data['entry_recomeng'] = $this->language->get('entry_recomeng');
+        $data['text_recomengEnabled'] = $this->language->get('text_recomengEnabled');
+        $data['text_recomengDisabled'] = $this->language->get('text_recomengDisabled');
         $data['entry_apikey'] = $this->language->get('entry_apikey');
-        $data['entry_token']  = $this->language->get('entry_token');
-        $data['button_save']    = $this->language->get('button_save');
-        $data['button_cancel']  = $this->language->get('button_cancel');
+        $data['entry_token'] = $this->language->get('entry_token');
+        $data['button_save'] = $this->language->get('button_save');
+        $data['button_cancel'] = $this->language->get('button_cancel');
+        $data['token'] = $this->request->get['token'];
+        $data['route'] = $this->request->get['route'];
         /* --- END --- */
 
 
@@ -74,19 +86,19 @@ class ControllerModuleRetargeting extends Controller {
 
 
         /* BREADCRUMBS */
-        $data['breadcrumbs'] = array();
-        $data['breadcrumbs'][] = array(
+        $data['breadcrumbs'] = [];
+        $data['breadcrumbs'][] = [
             'text' => $this->language->get('text_home'),
             'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
-        );
-        $data['breadcrumbs'][] = array(
+        ];
+        $data['breadcrumbs'][] = [
             'text' => $this->language->get('text_module'),
             'href' => $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL')
-        );
-        $data['breadcrumbs'][] = array(
+        ];
+        $data['breadcrumbs'][] = [
             'text' => $this->language->get('heading_title'),
             'href' => $this->url->link('module/retargeting', 'token=' . $this->session->data['token'], 'SSL')
-        );
+        ];
         /* --- END --- */
 
 
@@ -102,26 +114,34 @@ class ControllerModuleRetargeting extends Controller {
         } else {
             $data['retargeting_status'] = $this->config->get('retargeting_status');
         }
-        
+
         if (isset($this->request->post['retargeting_apikey'])) {
             $data['retargeting_apikey'] = $this->request->post['retargeting_apikey'];
         } else {
             $data['retargeting_apikey'] = $this->config->get('retargeting_apikey');
         }
-        
+
         if (isset($this->request->post['retargeting_token'])) {
             $data['retargeting_token'] = $this->request->post['retargeting_token'];
         } else {
             $data['retargeting_token'] = $this->config->get('retargeting_token');
         }
-        
+
+        /* Recommendation Engine */
+        if (isset($this->request->post['retargeting_recomeng'])) {
+            $data['retargeting_recomeng'] = $this->request->post['retargeting_recomeng'];
+        } else {
+            $data['retargeting_recomeng'] = (bool)$this->config->get('retargeting_recomeng');
+        }
+        /* End Recommendation Engine */
+
         /* 1. setEmail */
         if (isset($this->request->post['retargeting_setEmail'])) {
             $data['retargeting_setEmail'] = $this->request->post['retargeting_setEmail'];
         } else {
             $data['retargeting_setEmail'] = $this->config->get('retargeting_setEmail');
         }
-        
+
         /* 2. addToCart */
         if (isset($this->request->post['retargeting_addToCart'])) {
             $data['retargeting_addToCart'] = $this->request->post['retargeting_addToCart'];
@@ -177,7 +197,8 @@ class ControllerModuleRetargeting extends Controller {
      * INSTALL
      * ---------------------------------------------------------------------------------------------------------------------
      */
-    public function install() {
+    public function install()
+    {
 
         $this->load->model('extension/event'); // OpenCart 2.0.1+
         $this->load->model('design/layout');
@@ -194,8 +215,10 @@ class ControllerModuleRetargeting extends Controller {
                             ");
         }
 
-        $this->model_extension_event->addEvent('retargeting', 'catalog/model/checkout/order/addOrderHistory/before', 'module/retargeting/pre_order_add');
-        $this->model_extension_event->addEvent('retargeting', 'catalog/model/checkout/order/addOrderHistory/after', 'module/retargeting/post_order_add');
+        $this->model_extension_event->addEvent('retargeting', 'catalog/model/checkout/order/addOrderHistory/before',
+            'module/retargeting/pre_order_add');
+        $this->model_extension_event->addEvent('retargeting', 'catalog/model/checkout/order/addOrderHistory/after',
+            'module/retargeting/post_order_add');
 
     }
 
@@ -203,7 +226,8 @@ class ControllerModuleRetargeting extends Controller {
      * UNINSTALL
      * ---------------------------------------------------------------------------------------------------------------------
      */
-    public function uninstall() {
+    public function uninstall()
+    {
 
         $this->load->model('extension/event'); // OpenCart 2.0.1+
         //$this->load->model('tool/event'); // OpenCart 2.0.0
@@ -220,7 +244,8 @@ class ControllerModuleRetargeting extends Controller {
      * VALIDATE
      * ---------------------------------------------------------------------------------------------------------------------
      */
-    public function validate() {
+    public function validate()
+    {
 
         if (!$this->user->hasPermission('modify', 'module/retargeting')) {
             $this->error['warning'] = $this->language->get('error_permission');
@@ -234,6 +259,255 @@ class ControllerModuleRetargeting extends Controller {
             $this->error['warning'] = $this->language->get('error_token_required');
         }
 
+        if (!$this->isHTMLExtensionInstalled()) {
+            $this->error['warning'] = $this->language->get('error_html_module_required');
+        }
+
         return !$this->error;
     }
+
+    /**
+     * Checks if HTML Content extension is installed.
+     *
+     * @return boolean
+     */
+    private function isHTMLExtensionInstalled()
+    {
+        $this->load->model('extension/extension');
+
+        $result = $this->model_extension_extension->getInstalled('module');
+        $installed = false;
+
+        if (in_array('html', $result)) {
+            $installed = true;
+        }
+
+        return $installed;
+    }
+
+    /**
+     * Handles Recommendation Enable and Disable statuses.
+     *
+     * @return mixed
+     */
+    public function ajax()
+    {
+        $response = [
+            'status' => false
+        ];
+        $token = $this->request->get['token'];
+        $route = $this->request->get['route'];
+        $action = isset($this->request->post['action']) ? $this->request->post['action'] : '';
+
+        if (empty($token) || empty($route) || empty($action)) {
+            return $this->response->setOutput(json_encode($response));
+        }
+
+        if ($action == 'insert') {
+            $this->insertDbRecomEngHome();
+            $this->insertDbRecomEngCategory();
+            $this->insertDbRecomEngProduct();
+            $this->insertDbRecomEngCheckout();
+            $this->insertDbRecomEngThankYou();
+            $this->insertDbRecomEngSearch();
+            $response = [
+                'status' => true,
+                'state' => true
+            ];
+
+            return $this->response->setOutput(json_encode($response));
+        } elseif ($action == 'delete') {
+            $this->deleteModuleByName('Retargeting Recommendation Engine Home Page');
+            $this->deleteModuleByName('Retargeting Recommendation Engine Category Page');
+            $this->deleteModuleByName('Retargeting Recommendation Engine Product Page');
+            $this->deleteModuleByName('Retargeting Recommendation Engine Checkout Page');
+            $this->deleteModuleByName('Retargeting Recommendation Engine Thank You Page');
+            $this->deleteModuleByName('Retargeting Recommendation Engine Search Page');
+
+            $response = [
+                'status' => true,
+                'state' => false
+            ];
+
+            return $this->response->setOutput(json_encode($response));
+        }
+    }
+
+    /**
+     * Inserts Recommendation Engine Home Page module
+     * into HTML Content extension.
+     *
+     * @return void
+     */
+    private function insertDbRecomEngHome()
+    {
+        $this->load->model('extension/module');
+        $this->model_extension_module->addModule(
+            'html',
+            [
+                'name' => 'Retargeting Recommendation Engine Home Page',
+                'module_description' => [
+                    '1' => [
+                        'title' => '',
+                        'description' => '<div id="retargeting-recommeng-home-page"><img src="https://nastyhobbit.org/data/media/3/happy-panda.jpg"></div>',
+                    ],
+                ],
+                'status' => '1'
+            ]
+        );
+    }
+
+    /**
+     * Inserts Recommendation Engine Category Page module
+     * into HTML Content extension.
+     *
+     * @return void
+     */
+    private function insertDbRecomEngCategory()
+    {
+        $this->load->model('extension/module');
+        $this->model_extension_module->addModule(
+            'html',
+            [
+                'name' => 'Retargeting Recommendation Engine Category Page',
+                'module_description' => [
+                    '1' => [
+                        'title' => '',
+                        'description' => '<div id="retargeting-recommeng-category-page"><img src="https://nastyhobbit.org/data/media/3/happy-panda.jpg"></div>',
+                    ],
+                ],
+                'status' => '1'
+            ]
+        );
+    }
+
+    /**
+     * Inserts Recommendation Engine Product Page module
+     * into HTML Content extension.
+     *
+     * @return void
+     */
+    private function insertDbRecomEngProduct()
+    {
+        $this->load->model('extension/module');
+        $this->model_extension_module->addModule(
+            'html',
+            [
+                'name' => 'Retargeting Recommendation Engine Product Page',
+                'module_description' => [
+                    '1' => [
+                        'title' => '',
+                        'description' => '<div id="retargeting-recommeng-product-page"><img src="https://nastyhobbit.org/data/media/3/happy-panda.jpg"></div>',
+                    ],
+                ],
+                'status' => '1'
+            ]
+        );
+    }
+
+    /**
+     * Inserts Recommendation Engine Checkout Page module
+     * into HTML Content extension.
+     *
+     * @return void
+     */
+    private function insertDbRecomEngCheckout()
+    {
+        $this->load->model('extension/module');
+        $this->model_extension_module->addModule(
+            'html',
+            [
+                'name' => 'Retargeting Recommendation Engine Checkout Page',
+                'module_description' => [
+                    '1' => [
+                        'title' => '',
+                        'description' => '<div id="retargeting-recommeng-checkout-page"><img src="https://nastyhobbit.org/data/media/3/happy-panda.jpg"></div>',
+                    ],
+                ],
+                'status' => '1'
+            ]
+        );
+    }
+
+    /**
+     * Inserts Recommendation Engine Thank You Page module
+     * into HTML Content extension.
+     *
+     * @return void
+     */
+    private function insertDbRecomEngThankYou()
+    {
+        $this->load->model('extension/module');
+        $this->model_extension_module->addModule(
+            'html',
+            [
+                'name' => 'Retargeting Recommendation Engine Thank You Page',
+                'module_description' => [
+                    '1' => [
+                        'title' => '',
+                        'description' => '<div id="retargeting-recommeng-thank-you-page"><img src="https://nastyhobbit.org/data/media/3/happy-panda.jpg"></div>',
+                    ],
+                ],
+                'status' => '1'
+            ]
+        );
+    }
+
+    /**
+     * Inserts Recommendation Engine Search Page module
+     * into HTML Content extension.
+     *
+     * @return void
+     */
+    private function insertDbRecomEngSearch()
+    {
+        $this->load->model('extension/module');
+        $this->model_extension_module->addModule(
+            'html',
+            [
+                'name' => 'Retargeting Recommendation Engine Search Page',
+                'module_description' => [
+                    '1' => [
+                        'title' => '',
+                        'description' => '<div id="retargeting-recommeng-search-page"><img src="https://nastyhobbit.org/data/media/3/happy-panda.jpg"></div>',
+                    ],
+                ],
+                'status' => '1'
+            ]
+        );
+    }
+
+    /**
+     * Checks a module by name to verify its existence
+     * into '_module' table.
+     *
+     * @param [string] $moduleName
+     *
+     * @return void
+     */
+    private function checkModuleByName($moduleName)
+    {
+        $this->load->model('extension/module');
+        $query = $this->db->query('SELECT * FROM `' . DB_PREFIX . "module` WHERE `name` = '" . $moduleName . "'");
+        $result = $query->row;
+        return 'html.' . $result['module_id'];
+    }
+
+
+    /**
+     * Deletes a module by name from '_module' &
+     * '_layout_module' table.
+     *
+     * @param [string] $moduleName
+     *
+     * @return void
+     */
+    private function deleteModuleByName($moduleName)
+    {
+        $this->load->model('extension/module');
+        $moduleId = $this->checkModuleByName($moduleName);
+        $this->db->query('DELETE FROM `' . DB_PREFIX . "module` WHERE `name` = '" . $moduleName . "'");
+        $this->db->query('DELETE FROM `' . DB_PREFIX . "layout_module` WHERE `code` = '" . $moduleId . "'");
+    }
+
 }
