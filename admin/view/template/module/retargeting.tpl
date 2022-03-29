@@ -39,7 +39,7 @@
                 <!-- Retargeting logo/img -->
                 <div class="row" style="min-height:45px;">
                     <div class="col-md-12">
-                        <img src="https://retargeting.ro/static/images/i/logo.png" class="img-responsive" alt="Retargeting Module for OpenCart 2.x" />
+                        <img src="https://retargeting.biz/img/logos/LOGO_retargeting.svg" class="img-responsive" style="height:70px;padding:10px;" alt="Retargeting Module for OpenCart 2.x" />
                     </div>
                 </div>
 
