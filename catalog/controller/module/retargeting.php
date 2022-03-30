@@ -532,7 +532,7 @@ class ControllerModuleRetargeting extends Controller {
             $data['sendCategory'] .= '_ra.sendCategoryInfo = {';
 
             /* We have a nested category */
-            if (count($data['current_category']) > 1) {
+            if (is_array($data['current_category']) && count($data['current_category']) > 1) {
 
                 for ($i = count($data['current_category']) - 1; $i > 0; $i--) {
                     $category_id = $data['current_category'][$i];
