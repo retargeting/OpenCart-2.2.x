@@ -642,6 +642,9 @@ class ControllerModuleRetargeting extends Controller {
             $product_id = strtok($this->request->get['product_id'], '?');
             $product_url = $this->url->link('product/product', 'product_id=' . $product_id);
             $product_details = $this->model_catalog_product->getProduct($product_id);
+
+            if (!empty($product_details['name'])) {
+
             $product_categories = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_category WHERE product_id = '" . (int)$product_id . "'");
             $product_categories = $product_categories->rows; // Get all the subcategories for this product. Reorder its numerical indexes to ease the breadcrumb logic
             $decoded_product_name = htmlspecialchars_decode($product_details['name']);
@@ -764,6 +767,7 @@ class ControllerModuleRetargeting extends Controller {
                                         };
                                     ";
             $data['js_output'] .= $data['likeFacebook'];
+            }
         }
         /* --- END sendProduct  --- */
         
