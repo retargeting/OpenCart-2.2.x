@@ -862,7 +862,7 @@ class ControllerModuleRetargeting extends Controller {
                                                     if ($(\"{$data['retargeting_addToCart']}\").length > 0) {  
                                                         /* -- addToCart -- */
                                                         $(\"{$data['retargeting_addToCart']}\").click(function(){
-                                                            _ra.addToCart({$mouseOverAddToCart_product_id}, ".(($product_details['quantity'] > 0) ? 1 : 0).", false, function(){console.log('addToCart FIRED!')});
+                                                            _ra.addToCart({$mouseOverAddToCart_product_id}, ( document.querySelector(\"[name='quantity']\") ?? { value:1 } ).value , false, function(){console.log('addToCart FIRED!')});
                                                         });
                                                     }
                                                 });
