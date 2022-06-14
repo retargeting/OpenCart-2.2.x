@@ -591,10 +591,11 @@ class ControllerModuleRetargeting extends Controller {
             //reset($data['current_category']);
 
             $data['sendCategory'] .= '};';
-            $data['sendCategory'] .= "
+            $data['sendCategory'] .= "  jQuery(document).ready(function(){
                                             if (_ra.ready !== undefined) {
                                                 _ra.sendCategory(_ra.sendCategoryInfo);
                                             };
+                                        });
                                             ";
 
             /* Send to output */
@@ -619,10 +620,11 @@ class ControllerModuleRetargeting extends Controller {
                                                                 'id': {$data['brand_id']},
                                                                 'name': '{$encoded_data_brand_name}'
                                                                 };
-
+                                                            jQuery(document).ready(function(){
                                                                 if (_ra.ready !== undefined) {
                                                                     _ra.sendBrand(_ra.sendBrandInfo);
                                                                 };
+                                                            });
                                             ";
 
                 /* Send to output */
@@ -750,10 +752,11 @@ class ControllerModuleRetargeting extends Controller {
              }// Close check if product has categories assigned
 
             $data['sendProduct'] .= "};"; // Close _ra.sendProductInfo
-            $data['sendProduct'] .= "
+            $data['sendProduct'] .= "   jQuery(document).ready(function(){
                                             if (_ra.ready !== undefined) {
                                                 _ra.sendProduct(_ra.sendProductInfo);
                                             };
+                                        });
                                             ";
             $data['js_output'] .= $data['sendProduct'];
 
