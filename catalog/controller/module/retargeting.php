@@ -91,6 +91,11 @@ class ControllerModuleRetargeting extends Controller {
        // $this->load->model('marketing/coupon'); /* Available only in the admin/ area */
 //         $this->load->model('total/coupon');
 
+        $data['status'] = (bool) $this->config->get('retargeting_status');
+
+        if (!$data['status']) {
+            return '';
+        }
         /* ---------------------------------------------------------------------------------------------------------------------
          * Get the saved values from the admin area
          * ---------------------------------------------------------------------------------------------------------------------
@@ -101,8 +106,8 @@ class ControllerModuleRetargeting extends Controller {
         $data['retargeting_setEmail'] = htmlspecialchars_decode($this->config->get('retargeting_setEmail'));
         $data['retargeting_addToCart'] = htmlspecialchars_decode($this->config->get('retargeting_addToCart'));
         $data['retargeting_clickImage'] = htmlspecialchars_decode($this->config->get('retargeting_clickImage'));
-        $data['retargeting_commentOnProduct'] = htmlspecialchars_decode($this->config->get('retargeting_commentOnProduct'));
-        $data['retargeting_setVariation'] = htmlspecialchars_decode($this->config->get('retargeting_setVariation'));
+        // $data['retargeting_commentOnProduct'] = htmlspecialchars_decode($this->config->get('retargeting_commentOnProduct'));
+        // $data['retargeting_setVariation'] = htmlspecialchars_decode($this->config->get('retargeting_setVariation'));
 /*
         if (isset($this->session->data['order_id'])) {
             setcookie("retargeting_save_order", $this->session->data['order_id'], time()+3600);
@@ -834,11 +839,11 @@ class ControllerModuleRetargeting extends Controller {
 
         /*
          * commentOnProduct ✓
-         */
+         * /
         if ($data['current_page'] === 'product/product') {
             $commentOnProduct_product_info = strtok($this->request->get['product_id'], '?');
             $data['commentOnProduct'] = "
-                                        /* -- commentOnProduct -- */
+                                        /* -- commentOnProduct -- * /
                                         jQuery(document).ready(function($){
                                             if ($(\"{$data['retargeting_commentOnProduct']}\").length > 0) {
                                                 $(\"{$data['retargeting_commentOnProduct']}\").click(function(){
@@ -849,7 +854,7 @@ class ControllerModuleRetargeting extends Controller {
                                         ";
 
             $data['js_output'] .= $data['commentOnProduct'];
-        }
+        } */
         /* --- END commentOnProduct  --- */
 
 /*
@@ -1065,19 +1070,124 @@ class ControllerModuleRetargeting extends Controller {
               
               unset($this->session->data['retargeting_post_order_add']);
           }
-        }  
+        }
+
+        self::$ins = $this;
+        $rec_engine = self::recstatus() ? '<script type="text/javascript">'.self::rec_engine_load($data['current_page']).'</script>' : '';
 
         /* ---------------------------------------------------------------------------------------------------------------------
          * Set the template path for our module & load the View
          * ---------------------------------------------------------------------------------------------------------------------
          */
-        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/module/retargeting.tpl')) {
-            return $this->load->view($this->config->get('config_template') . '/module/retargeting.tpl', $data);
-        } else {
-            return $this->load->view('/module/retargeting.tpl', $data);
-        }
+        return '<script>
+        (function(){
+        ra_key = "'.$data['api_key_field'].'";
+        ra_params = {
+            add_to_cart_button_id: "'.$data['retargeting_addToCart'].'",
+            price_label_id: "price_label_id",
+        };
+        var ra = document.createElement("script"); ra.type ="text/javascript"; ra.async = true; ra.src = ("https:" ==
+        document.location.protocol ? "https://" : "http://") + "tracking.retargeting.biz/v3/rajs/" + ra_key + ".js";
+        var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(ra,s);})();
+        '.$data['js_output'].'
+    </script>'.$rec_engine;
     }
 
+    /* Rec Engine */
+    private static $ins;
+
+    public static $prefix = 'retargeting_';
+
+    private static $rec_engine = array(
+        "" => "home_page",
+        "common/home" => "home_page",
+        "checkout/success" => "thank_you_page", /* Importanta Ordinea checkout_onepage_success */
+
+        "checkout/cart" => "shopping_cart",
+        "checkout/checkout" => "shopping_cart",
+
+        "product/category" => "category_page",
+        "product/manufacturer/info" => "category_page",
+
+        "product/product" => "product_page",
+
+        "product/search" => "search_page",
+        "error/not_found" => "page_404"
+    );
+
+    public static function recstatus() {
+        return (bool) self::cfg();
+    }
+
+    public static function apistatus() {
+        return (bool) self::$ins->config->get(self::$prefix.'status');
+    }
+    
+    public static function cfg($key = 'rec_status') {
+        $v = self::$ins->config->get(self::$prefix.$key);
+
+        if (is_array($v)) {
+            foreach($v as $k=>$vv) {
+                $v[$k]['value'] = html_entity_decode($vv['value']);
+            }
+        }
+
+        return $v;
+    }
+
+    private static function is404() {
+        $route = isset(self::$ins->request->get['route']) ? self::$ins->request->get['route'] : 'common/home';
+        $controllerPath = DIR_APPLICATION . 'controller/' . str_replace(array('../', '..\\', '..'), '', $route) . '.php';
+
+        if (!is_file($controllerPath)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function rec_engine_load($ActionName = null) {
+
+        $ActionName = $ActionName === null ? self::$ins->getCurrentPage() : $ActionName;
+        $ActionName = $ActionName === false ? 'common/home' : $ActionName;
+
+        if (self::apistatus() && self::recstatus()) {
+            //$ActionName = self::$_req->getFullActionName();
+            if (isset(self::$rec_engine[$ActionName]) || self::is404()) {
+
+                if (!isset(self::$rec_engine[$ActionName])) {
+                    $ActionName = 'error/not_found';
+                }
+
+                return '
+                var _ra_rec_engine = {};
+    
+                _ra_rec_engine.init = function () {
+                    let list = this.list;
+                    for (let key in list) {
+                        _ra_rec_engine.insert(list[key].value, list[key].selector, list[key].place);
+                    }
+                };
+    
+                _ra_rec_engine.insert = function (code = "", selector = null, place = "before") {
+                    if (code !== "" && selector !== null) {
+                        let newTag = document.createRange().createContextualFragment(code);
+                        let content = document.querySelector(selector);
+    
+                        content.parentNode.insertBefore(newTag, place === "before" ? content : content.nextSibling);
+                    }
+                };
+                _ra_rec_engine.list = '.json_encode(self::cfg(self::$rec_engine[$ActionName])).';
+                _ra_rec_engine.init();';
+            }
+        }
+        /*
+            console.log('".$ActionName."','RTGMAP');
+
+            console.log("'.$ActionName.'","RTGMAP");
+        */
+        return "";
+    }
+    /* Rec Engine END */
 
     
     /* ---------------------------------------------------------------------------------------------------------------------
