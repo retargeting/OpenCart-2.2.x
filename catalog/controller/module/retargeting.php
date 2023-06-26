@@ -233,7 +233,8 @@ class ControllerModuleRetargeting extends Controller {
 
                         case 'extra data':
                             $NewList[$val] = json_encode([
-                                'categories' => $extrastring
+                                'categories' => $extrastring,
+                                'product_weight' => $this->getProductWeight($product)
                             ], JSON_UNESCAPED_SLASHES);
                         break;
 
@@ -1091,6 +1092,29 @@ class ControllerModuleRetargeting extends Controller {
         var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(ra,s);})();
         '.$data['js_output'].'
     </script>'.$rec_engine;
+    }
+
+    private function getWeightClassForProduct($product) {
+        $query = $this->db->query("SELECT unit FROM `" . DB_PREFIX . "weight_class_description` WHERE 
+                weight_class_id='".$product['weight_class_id']."'");
+
+        return $query->row['unit'];
+    }
+
+    private function formatWeightToKg($unit,$weight) {
+        if(strtoupper($unit) === "G") {
+            return $weight/1000;
+        }else if(strtoupper($unit) === 'LB') {
+            return $weight*0.45359237;
+        }else if(strtoupper($unit) === 'OZ') {
+            return $weight/35.27396195;
+        }
+        return $weight;
+    }
+
+    private function getProductWeight($product) {
+        return number_format($this->formatWeightToKg($this->getWeightClassForProduct($product),$product['weight']), 2, '.', '') > 0
+            ? floatval(number_format($this->formatWeightToKg($this->getWeightClassForProduct($product),$product['weight']), 2, '.', '')) : 0.01;
     }
 
     /* Rec Engine */
